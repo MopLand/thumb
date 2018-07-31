@@ -1,0 +1,9 @@
+{
+	"name": "vcdownload",
+	"description": "Video Cover Download",
+	"version": "0.0.1",
+	"dependencies": {
+		"glob": "*",
+		"request": "*"
+	}
+}
