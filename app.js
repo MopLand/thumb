@@ -95,7 +95,7 @@ var app = {
 	
 		for( var i in app.Task ){		
 			
-			var url = 'https://www.javbus12.pw/' + app.Task[i].name;
+			var url = 'https://www.3ubdxu00l1lkcjoz5n.com/' + app.Task[i].name;
 			
 			(new Promise(function( resolve, reject ){
 
