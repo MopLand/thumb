@@ -95,7 +95,7 @@ var app = {
 	
 		for( var i in app.Task ){		
 			
-			var url = 'https://www.3ubdxu00l1lkcjoz5n.com/' + app.Task[i].name;
+			var url = 'https://www.dmmbus.in/' + app.Task[i].name;
 			
 			(new Promise(function( resolve, reject ){
 
@@ -132,7 +132,7 @@ var app = {
 
 								//重命名视频
 								if( !fs.existsSync( object.movie ) ){
-									fs.rename( object.oldnm, object.movie );
+									fs.renameSync( object.oldnm, object.movie );
 								}else{
 									console.log( 'Repeat', object.name );
 								}
