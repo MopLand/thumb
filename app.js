@@ -95,7 +95,7 @@ var app = {
 	
 		for( var i in app.Task ){		
 			
-			var url = 'https://www.dmmbus.in/' + app.Task[i].name;
+			var url = 'https://www.dmmsee.men/' + app.Task[i].name;
 			
 			(new Promise(function( resolve, reject ){
 
@@ -134,7 +134,7 @@ var app = {
 								if( !fs.existsSync( object.movie ) ){
 									fs.renameSync( object.oldnm, object.movie );
 								}else{
-									console.log( 'Repeat', object.name );
+									console.log( 'Repeat Movie', object.name );
 								}
 								
 								resolve( object );
