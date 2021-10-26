@@ -21,6 +21,7 @@ var app = {
 
 	//初始化
 	Init : function( dir ){	
+		app.Host = 'https://www.dmmsee.fun/';
 		app.Base = dir;
 		app.Scan( app.Stop );
 	},
@@ -74,7 +75,7 @@ var app = {
 				
 				//封面检查
 				if( !fs.existsSync( image ) ){
-					app.Task.push( { 'name' : name, 'image' : image, 'movie' : movie, 'oldnm' : oldnm, 'object' : file } );									
+					app.Task.push( { 'name' : name, 'image' : image, 'movie' : movie, 'oldnm' : oldnm, 'object' : file } );
 				}
 				
 				//批量下载
@@ -95,17 +96,18 @@ var app = {
 	
 		for( var i in app.Task ){		
 			
-			var url = 'https://www.dmmsee.men/' + app.Task[i].name;
+			var url = app.Host + app.Task[i].name;
 			
 			(new Promise(function( resolve, reject ){
 
 				var object = app.Task[i];
 				
 				request({uri: url, encoding: 'binary'}, function (error, response, body) {
-					//console.log( url, body );
+					//console.log( url, error );
+					//console.log( response, body );
 					if (!error && response.statusCode == 200) {
 						if( match = /<a class="bigImage" href="(.+?)">/.exec( body ) ){
-							object.cover = match[1];
+							object.cover = app.Host + match[1];
 							resolve( object );
 						}else{
 							console.log( 'Error:', url );
