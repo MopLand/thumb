@@ -21,7 +21,7 @@ var app = {
 
 	//初始化
 	Init : function( dir ){	
-		app.Host = 'https://www.dmmsee.fun/';
+		app.Host = 'https://www.javsee.zone/';
 		app.Base = dir;
 		app.Scan( app.Stop );
 	},
@@ -29,17 +29,17 @@ var app = {
 	//扫描文件
 	Scan : function( fn ){
 	
-		glob('**/*.+(avi|mkv|wmv|mp4|m2ts)', { cwd : app.Base, nocase : true }, function (er, files) {
+		glob('**/*.+(avi|mkv|wmv|mp4|m2ts|ts|mpeg)', { cwd : app.Base, nocase : true }, function (er, files) {
 			
 			files.forEach(function(item,index){
 				
 				var file = path.parse( item );
 				var name = file.name;
-				var newl = name.replace('_hd_','_');
+				var newl = name.replace('_hd_','-').replace('_','-');
 				var part = '';
 
 				//提取番号
-				if( match = /([a-z]+)([\_\-]?)(\d{3,})/i.exec( newl ) ){
+				if( match = /([0-9]*[a-z]+)([\_\-]?)(\d{3,})/i.exec( newl ) ){
 					//console.log(match);
 					if( match[3].substr(0,2) == '00' && match[3].length > 3 ){
 						match[3] = match[3].replace('00','');
@@ -52,9 +52,14 @@ var app = {
 				//console.log('-----------------------------');
 				
 				//多个文件
-				if( match = /cd(\d+)/.exec( newl ) ){
-					part = '-cd' + match[1];
+				if( match = /(\d+)\-(\w+)/.exec( newl ) ){
+					part += '-' + match[2];
 				}
+				
+				//中文翻译
+				//if( match = /\-c/i.exec( newl ) ){
+				//	part = '-c';
+				//}
 				
 				//原始文件
 				var oldnm = app.Base + '/' + file.dir + '/' + file.base;
@@ -110,7 +115,7 @@ var app = {
 							object.cover = app.Host + match[1];
 							resolve( object );
 						}else{
-							console.log( 'Error:', url );
+							console.log( 'Error:', url, error );
 							reject( object );
 						}
 					}else{
@@ -120,7 +125,7 @@ var app = {
 			
 			})).then(function( object ){
 			
-				console.log( 'Cover:', object.cover );
+				console.log( 'Cover:', object.image, object.cover );
 				
 				return new Promise(function( resolve, reject ){
 			
@@ -149,10 +154,14 @@ var app = {
 				});
 			
 			}).then(function( object ){
+
 				app.Stats.Renew ++;
+
 			}).catch(function( object ) {
+
 				console.log( 'Error:', object.name, object.oldnm );
 				app.Stats.Error ++;
+
 			});
 		
 		};
