@@ -112,7 +112,11 @@ var app = {
 					//console.log( response, body );
 					if (!error && response.statusCode == 200) {
 						if( match = /<a class="bigImage" href="(.+?)">/.exec( body ) ){
-							object.cover = app.Host + match[1];
+							if( /^http(s)?:/i.test( match[1] ) ){
+								object.cover = match[1];
+							}else{
+								object.cover = app.Host + match[1];
+							}							
 							resolve( object );
 						}else{
 							console.log( 'Error:', url, error );
