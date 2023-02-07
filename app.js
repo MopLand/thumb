@@ -158,8 +158,6 @@ var app = {
 			
 			let url = app.Host + app.Task[i].name;
 
-			//url = 'https://www.javsee.zone/EVIS-448';
-
 			//console.log( i, app.Task[i].name );
 
 			request({uri: url, timeout: 1000 * 3, encoding: 'utf-8'}, function (error, response, body) {
@@ -182,10 +180,10 @@ var app = {
 							//console.log( actor );
 	
 							if( !app.Star[ actor ] ){
-								app.Star[ actor ] = [ app.Dirs.indexOf( actor ) > -1 ? 'Y' : '-' ];
+								app.Star[ actor ] = app.Dirs.indexOf( actor ) > -1 ? ['Y'] : [];
 							}
 	
-							app.Star[ actor ].push( app.Task[i].name );
+							app.Star[ actor ].unshift( app.Task[i].name );
 						}
 
 					}
