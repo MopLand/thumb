@@ -6,8 +6,14 @@ var request = require('request');
 
 var app = {
 
+	//演员列表
+	Dirs : [],
+
 	//任务列队
 	Task : [],
+
+	//演員列队
+	Star : [],
 
 	//基础目录
 	Base : null,
@@ -20,14 +26,55 @@ var app = {
 	},
 
 	//初始化
-	Init : function( dir ){	
+	Init : function( dir, type, save ){	
 		app.Host = 'https://www.javsee.zone/';
 		app.Base = dir;
-		app.Scan( app.Stop );
+		app.Scan( app.Stop, type, save );
+	},
+
+	Sort : function(obj) {
+		return Object.keys(obj).sort().reduce(function (result, key) {
+			result[key] = obj[key];
+			return result;
+		}, {});
+	},
+
+	/**
+     * 获取命令行参数
+     * @param string param 参数名称
+     * @param string supple 默认值
+     */
+	Argv : function(param = null, supple = null) {
+		var argvs = process.argv.slice(2);
+
+		var index = argvs.findIndex(function (val, pos) {
+			//console.log(val, pos);
+			if( param ){
+				return val == '-' + param;
+			}else if( pos == 0 && val.indexOf('-') == -1 ){
+				return true;
+			}else if( pos % 2 === 0 && val.indexOf('-') == -1 ){
+				return true;
+			}
+		});
+
+		if (index == -1) {
+			return supple;
+		} else {
+			return param ? argvs[index + 1] : argvs[index];
+		}
 	},
 
 	//扫描文件
-	Scan : function( fn ){
+	Scan : function( fn, type, save ){
+
+		//console.log( app.Base );
+
+		if( save ){
+			glob('*', { cwd : save, nocase : true }, function (er, files) {
+				app.Dirs = files;
+			});
+		}
 	
 		glob('**/*.+(avi|mkv|wmv|mp4|m2ts|ts|mpeg)', { cwd : app.Base, nocase : true }, function (er, files) {
 			
@@ -37,6 +84,7 @@ var app = {
 				var name = file.name;
 				var newl = name.replace('_hd_','-').replace('_','-');
 				var part = '';
+				var last = files.length - 1;
 
 				//提取番号
 				if( match = /([0-9]*[a-z]+)([\_\-]?)(\d{3,})/i.exec( newl ) ){
@@ -74,18 +122,23 @@ var app = {
 				//console.log( file.name, name, '-------' );
 
 				//重复视频
-				if( file.name != name && fs.existsSync( movie ) ){
+				if( file.name != name && fs.existsSync( movie ) && type != 'actor' ){
 					console.log( 'Repeat', file.name );
 				}
 				
 				//封面检查
-				if( !fs.existsSync( image ) ){
+				if( !fs.existsSync( image ) || type == 'actor' ){
 					app.Task.push( { 'name' : name, 'image' : image, 'movie' : movie, 'oldnm' : oldnm, 'object' : file } );
 				}
 				
 				//批量下载
-				if( index == files.length - 1 ){
-					app.Thumb();
+				if( index == last ){
+					//console.log( app.Task.length );
+					if( type == 'actor' ){
+						app.Actor( last );
+					}else{
+						app.Thumb( last );
+					}
 					app.Stop();
 				}
 
@@ -97,11 +150,65 @@ var app = {
 	
 	},
 
+	Actor : function( last ){
+
+		//console.log( app.Task );
+
+		for( let i in app.Task ){
+			
+			let url = app.Host + app.Task[i].name;
+
+			//url = 'https://www.javsee.zone/EVIS-448';
+
+			//console.log( i, app.Task[i].name );
+
+			request({uri: url, timeout: 1000 * 3, encoding: 'utf-8'}, function (error, response, body) {
+
+				//console.log( i, url, error );
+				//console.log( response, body );
+
+				if (!error && response.statusCode == 200) {
+
+					let match = body.match( /<div class="star-name"><a href="(.+)\/star\/(.+)" title="(.+)">/g );
+
+					//console.log( match );
+
+					if( match && match.length == 1 ){
+
+						for( let z in match ){
+
+							let actor = /title="(.+)"/.exec( match[z] )[1];
+	
+							//console.log( actor );
+	
+							if( !app.Star[ actor ] ){
+								app.Star[ actor ] = [ app.Dirs.indexOf( actor ) > -1 ? 'Y' : '-' ];
+							}
+	
+							app.Star[ actor ].push( app.Task[i].name );
+						}
+
+					}
+
+					app.Stats.Renew ++;
+					
+				}else{
+
+					app.Stats.Error ++;
+
+				}
+
+			});
+
+		}
+	
+	},
+
 	Thumb : function(){
 	
-		for( var i in app.Task ){		
+		for( let i in app.Task ){
 			
-			var url = app.Host + app.Task[i].name;
+			let url = app.Host + app.Task[i].name;
 			
 			(new Promise(function( resolve, reject ){
 
@@ -116,7 +223,7 @@ var app = {
 								object.cover = match[1];
 							}else{
 								object.cover = app.Host + match[1];
-							}							
+							}
 							resolve( object );
 						}else{
 							console.log( 'Error:', url, error );
@@ -173,15 +280,18 @@ var app = {
 	},	
 
 	//任务终止时回调
-	Stop : function( ){
+	Stop : function(){
 
 		var fn = function(){
+
+			//console.log( app.Task.length, app.Stats );
 
 			if( app.Task.length == app.Stats.Renew + app.Stats.Error ){
 				
 				var info = ' 任务完成，视频总数：'+ app.Task.length +'，更新封面：'+ app.Stats.Renew +'，失败次数：'+ app.Stats.Error;
 					info = info + '\n-----------------------------------';
 					console.log( info );
+					console.log( app.Sort( app.Star ) );
 	
 				process.exit();
 	
@@ -195,11 +305,17 @@ var app = {
 
 }
 
-var param = process.argv.splice(2);
+//var args = process.argv.splice(2);
 
-if( !param ){
+//console.log( args );
+
+let base = app.Argv();
+let type = app.Argv('type');
+let save = app.Argv('save');
+
+if( !base ){
 	console.log( '请输入要处理的目录地址.' );
+	console.log( 'node app.js [-type, -save] dir' );
 }else{
-	app.Init( param.shift() );
+	app.Init( base, type, save );
 }
- 
