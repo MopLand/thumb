@@ -48,15 +48,22 @@ var app = {
 		var argvs = process.argv.slice(2);
 
 		var index = argvs.findIndex(function (val, pos) {
-			//console.log(val, pos);
+			//console.log(param, val, pos);
+			
+			//找到指定参数
 			if( param ){
 				return val == '-' + param;
-			}else if( pos == 0 && val.indexOf('-') == -1 ){
-				return true;
-			}else if( pos % 2 === 0 && val.indexOf('-') == -1 ){
+			//}else if( pos == 0 && val.indexOf('-') == -1 ){
+			//	return true;
+			}
+			
+			//找到最后指令
+			if( pos % 2 === 0 && val.substring(0,1) != '-' ){
 				return true;
 			}
 		});
+		
+		//console.log( 'param:', param, ' index:', index );
 
 		if (index == -1) {
 			return supple;
@@ -310,6 +317,9 @@ var app = {
 let base = app.Argv();
 let type = app.Argv('type');
 let save = app.Argv('save');
+
+//console.log(process.argv.slice(2));
+//console.log(type, save, base);
 
 if( !base ){
 	console.log( '请输入要处理的目录地址.' );
