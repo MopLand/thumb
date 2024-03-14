@@ -94,13 +94,16 @@ var app = {
 				var last = files.length - 1;
 
 				//提取番号
-				if( match = /([0-9]*[a-z]+)([\_\-]?)(\d{3,})/i.exec( newl ) ){
+				if( movid = /([\w]+[\_\-])?([0-9]*[a-z]+[\_\-]?)(\d{3,})/i.exec( newl ) ){
 					//console.log(match);
+					/*
 					if( match[3].substr(0,2) == '00' && match[3].length > 3 ){
 						match[3] = match[3].replace('00','');
 					}
 					name = match[1] + '-' + match[3];
 					name = name.toLowerCase();
+					*/
+					name = movid[0].toLowerCase();
 				}
 				
 				//console.log('Video:', name);
@@ -116,6 +119,11 @@ var app = {
 				//	part = '-c';
 				//}
 				
+				//if( file.base == 'pred-498-c.mp4' ){
+				//	console.log('Video:', name);
+				//	process.exit();
+				//}
+				
 				//原始文件
 				var oldnm = app.Base + '/' + file.dir + '/' + file.base;
 				
@@ -129,12 +137,12 @@ var app = {
 				//console.log( file.name, name, '-------' );
 
 				//重复视频
-				if( file.name != name && fs.existsSync( movie ) && type != 'actor' ){
-					console.log( 'Repeat', file.name );
+				if( file.name.toLowerCase() != name + part && fs.existsSync( movie ) && type != 'actor' ){
+					console.log( 'Repeat', file.name, name, movie );
 				}
 				
 				//封面检查
-				if( !fs.existsSync( image ) || type == 'actor' ){
+				if( movid && ( !fs.existsSync( image ) || type == 'actor' ) ){
 					app.Task.push( { 'name' : name, 'image' : image, 'movie' : movie, 'oldnm' : oldnm, 'object' : file } );
 				}
 				
@@ -213,17 +221,29 @@ var app = {
 	
 		for( let i in app.Task ){
 			
-			let url = app.Host + app.Task[i].name;
+			//let url = app.Host + app.Task[i].name;
+			let url = 'https://www5.javxxx.me/movie/' + app.Task[i].name + '/';
 			
 			(new Promise(function( resolve, reject ){
 
 				var object = app.Task[i];
+			
+				//if( app.Task[i].name == 'pred-498' ){
+				//	console.log( app.Task[i] );
+				//	process.exit();
+				//}
 				
-				request({uri: url, encoding: 'binary'}, function (error, response, body) {
+				request({uri: url, encoding: 'binary', timedout : 5000, agentOptions: { rejectUnauthorized: false } }, function (error, response, body) {
 					//console.log( url, error );
 					//console.log( response, body );
+					
+					if( object.name == 'pred-498' ){
+						console.log( object.name, url, error, response, body, /<meta name="twitter:image" content="(.+?)">/.exec( body ) );
+						process.exit();
+					}
+					
 					if (!error && response.statusCode == 200) {
-						if( match = /<a class="bigImage" href="(.+?)">/.exec( body ) ){
+						if( match = /<meta name="twitter:image" content="(.+?)">/.exec( body ) ){
 							if( /^http(s)?:/i.test( match[1] ) ){
 								object.cover = match[1];
 							}else{
